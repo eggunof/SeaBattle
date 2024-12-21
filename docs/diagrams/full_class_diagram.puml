@@ -1,0 +1,675 @@
+@startuml
+package [input] as C_0012984019798606891164 {
+enum "Command" as C_0008407285054585442143
+enum C_0008407285054585442143 {
+INVALID
+UP
+DOWN
+LEFT
+RIGHT
+PRIMARY
+SECONDARY
+SAVE
+LOAD
+QUIT
+TOTAL_COMMANDS
+}
+class "HasParseMethod<T>" as C_0007944402605614631532
+class C_0007944402605614631532 <<concept>> {
+(T t)
+..
+{t.Parse()} -> std::same_as<Command>
+}
+class "GameController<input::HasParseMethod CommandParser>" as C_0001928390068135084108
+class C_0001928390068135084108 {
++GameController(Game & game, const CommandParser & parser) : void
++GameController(Game & game) : void
+..
++HandleInput() : void
+__
+-game_ : Game &
+-parser_ : CommandParser
+}
+class "Controls" as C_0017225230235595489251
+class C_0017225230235595489251 {
++Controls() : void
++Controls(const std::string & filename) : void
+..
++GetCommand(char key) const : Command
++ReadKeyBindings(const std::string & filename) : void
+__
+{static} -defaults_ : const std::map<char,Command>
+-key_to_command_ : std::map<char,Command>
+{static} -string_to_command_ : const std::map<std::string,Command>
+}
+class "ConsoleParser" as C_0012712922857029588653
+class C_0012712922857029588653 {
++ConsoleParser() = default : void
++ConsoleParser(const std::string & filename) : void
++ConsoleParser(Controls controls) : void
+..
++Parse() const : Command
+__
+-controls_ : Controls
+}
+}
+package [output] as C_0012698470826244250444 {
+abstract "GameRenderer" as C_0012676902587451234810
+abstract C_0012676902587451234810 {
++~GameRenderer() constexpr = default : void
+..
+{abstract} +Render(const std::string & string) = 0 : void
+{abstract} +Render(const std::exception & e) = 0 : void
+{abstract} +Render(const entities::GameField & field) = 0 : void
+{abstract} +Render(const entities::GameField & field, const Coordinates & cursor) = 0 : void
+{abstract} +Render(const entities::GameField & field, const Area & area) = 0 : void
+{abstract} +Render(const abilities::Ability & ability) = 0 : void
+{abstract} +Render(const abilities::Bombardment & ability) = 0 : void
+{abstract} +Render(const abilities::DoubleDamage & ability) = 0 : void
+{abstract} +Render(const abilities::Scanner & ability) = 0 : void
+__
+}
+class "ConsoleRenderer" as C_0012619179724770317191
+class C_0012619179724770317191 {
++Render(const std::string & string) : void
++Render(const std::exception & e) : void
++Render(const entities::GameField & field) : void
++Render(const entities::GameField & field, const Coordinates & cursor) : void
++Render(const entities::GameField & field, const Area & area) : void
++Render(const abilities::Ability & ability) : void
++Render(const abilities::Bombardment & ability) : void
++Render(const abilities::DoubleDamage & ability) : void
++Render(const abilities::Scanner & ability) : void
+__
+}
+}
+package [abilities] as C_0008066798227117857781 {
+abstract "Ability" as C_0005987336390602158236
+abstract C_0005987336390602158236 {
++~Ability() constexpr = default : void
+..
+{abstract} +Apply() = 0 : void
+{abstract} +RenderBy(output::GameRenderer & renderer) const = 0 : void
+__
+}
+class "Bombardment" as C_0004076100953837299465
+class C_0004076100953837299465 {
++Bombardment(entities::players::Player & user, entities::players::Player & target) : void
+..
++Apply() : void
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_double_damage_activated_ : bool &
+{static} +kName : const Name
+{static} -rng_ : utilities::RandomGenerator
+-target_ship_manager_ : entities::ShipManager &
+}
+class "DoubleDamage" as C_0000366963092714511740
+class C_0000366963092714511740 {
++DoubleDamage(entities::players::Player & user, entities::players::Player &) : void
+..
++Apply() : void
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_double_damage_activated_ : bool &
+{static} +kName : const Name
+}
+class "Scanner" as C_0005601711361542694080
+class C_0005601711361542694080 {
++Scanner(entities::players::Player & user, entities::players::Player & target) : void
+..
++Apply() : void
++IsFound() const : bool
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_found_ : bool
+{static} +kName : const Name
+{static} +kScannerRange : const Coordinates
+-start_coordinates_ : const Coordinates &
+-target_game_field_ : const entities::GameField &
+}
+class "AbilityRegistry" as C_0011251770995947139160
+class C_0011251770995947139160 {
+{static} +GetInstance() : AbilityRegistry &
+{static} +RegisterAbilities() : void
+__
+}
+class "AbilityManager" as C_0013161388446846177579
+class C_0013161388446846177579 {
++AbilityManager() : void
++AbilityManager(const json & j) : void
+..
++AddAbility(const Ability::Name & ability_name) : void
++AddRandomAbility() : void
++IsEmpty() const : bool
++PeekAbility() const : const Ability::Name &
++PopAbility() : void
++Size() const : size_t
++operator basic_json() const : json
+__
+-abilities_ : std::queue<Ability::Name>
+{static} -registry_ : const AbilityRegistry &
+{static} -rng_ : utilities::RandomGenerator
+}
+}
+package [utilities] as C_0008838560424680863493 {
+class "RandomGenerator" as C_0011731722491806328405
+class C_0011731722491806328405 {
++RandomGenerator(unsigned long seed = std::random_device{}()) : void
+..
++GetRandom<T>(const std::vector<T> & arr) : const T &
++GetRandom<T>(std::vector<T> & arr) : T &
++GetRandomInt<T>(T min, T max) : T
++GetRandomInt<T>(T max) : T
++GetRandomReal<T>(T min, T max) : T
++Shuffle<T>(std::vector<T> & arr) : void
+__
+-rng_ : std::mt19937
+}
+}
+package [entities] as C_0006633889520500500022 {
+class "Ship" as C_0010097717749984720267
+class C_0010097717749984720267 {
++Ship(uint8_t length) : void
++Ship(const Ship & other) = default : void
++Ship(Ship && other) noexcept = default : void
++Ship(const json & j) : void
+..
++operator=(const Ship & other) = default : Ship &
++operator=(Ship && other) noexcept = default : Ship &
+..
++GetLength() const : uint8_t
++GetSegment(uint8_t index) : Segment &
++IsSunk() const : bool
++operator basic_json() const : json
+__
+{static} +kMaxShipLength : const uint8_t
+{static} +kMinShipLength : const uint8_t
+-length_ : uint8_t
+-segments_ : std::vector<Segment>
+}
+enum "Ship##Orientation" as C_0011924014862371961313
+enum C_0011924014862371961313 {
+HORIZONTAL
+VERTICAL
+}
+class "Ship::Segment" as C_0016657000874055720998
+class C_0016657000874055720998 {
++GetHealth() const : uint8_t
++Hit(uint8_t damage = 1) : void
++IsSunk() const : bool
++Segment() constexpr = default : void
++Segment(uint8_t health) : void
+__
+-health_ : uint8_t
+{static} +kDefaultShipSegmentHealth : const uint8_t
+}
+class "ShipManager" as C_0006480716459242791953
+class C_0006480716459242791953 {
++ShipManager(const std::vector<uint8_t> & lengths = = {}) : void
++ShipManager(const ShipManager & other) = default : void
++ShipManager(ShipManager && other) noexcept = default : void
++ShipManager(const json & j) : void
+..
++operator=(const ShipManager & other) = default : ShipManager &
++operator=(ShipManager && other) noexcept = default : ShipManager &
+..
++GetNumberOfShips() const : uint16_t
++IsAllShipsSunk() const : bool
++begin() : iterator
++begin() const : const_iterator
++end() : iterator
++end() const : const_iterator
+__
+-ships_ : std::vector<Ship>
+}
+class "GameField" as C_0009863756097780501319
+class C_0009863756097780501319 {
++GameField(const Coordinates & dimensions = = {0, 0}) : void
++GameField(const GameField & other) = default : void
++GameField(GameField && other) noexcept = default : void
++GameField(const json & j, const std::unordered_map<uint16_t,Ship *> & ships_ids) : void
+..
++operator=(const GameField & other) = default : GameField &
++operator=(GameField && other) noexcept = default : GameField &
+..
++AttackCell(const Coordinates & coordinates, uint8_t damage) : AttackResult
++GetArea() const : Area
++GetCellState(const Coordinates & coordinates) const : CellState
++GetDimensions() const : const Coordinates &
++HideCell(const Coordinates & coordinates) : void
++HideCompletely() : void
++IsPlaceableOn(Area ship_area) const : bool
++IsShip(const Coordinates & coordinates) const : bool
++PlaceShip(Ship & ship, const Coordinates & coordinates, Ship::Orientation orientation) : void
++RevealCell(const Coordinates & coordinates) : void
++RevealCompletely() : void
++ToJson(const std::unordered_map<const Ship *,uint16_t> & ships_ids) const : json
+-ValidateArea(const Area & area) const : void
+-ValidateCoordinates(const Coordinates & coordinates) const : void
+__
+-cells_ : std::vector<std::vector<Cell>>
+-dimensions_ : Coordinates
+}
+enum "GameField##CellState" as C_0001819397201730746015
+enum C_0001819397201730746015 {
+UNKNOWN
+EMPTY
+SEGMENT_0HP
+}
+enum "GameField##AttackResult" as C_0016476966304050826666
+enum C_0016476966304050826666 {
+MISS
+SEGMENT_DAMAGED
+SEGMENT_DESTROYED
+SEGMENT_ALREADY_DESTROYED
+SHIP_DESTROYED
+}
+class "GameField::Cell" as C_0010592162105350372448
+class C_0010592162105350372448 {
+__
++is_revealed : bool
++segment_index : uint8_t
++ship : Ship *
+}
+package [players] as C_0009219439646238521319 {
+class "Player" as C_0008649833643707248413
+class C_0008649833643707248413 {
++Player() = default : void
++Player(const Player & other) = default : void
++Player(Player && other) noexcept = default : void
++Player(const json & j) : void
++~Player() constexpr = default : void
+..
++operator=(const Player & other) = default : Player &
++operator=(Player && other) noexcept = default : Player &
+..
++Attack(Player & target) : GameField::AttackResult
++GetCursorPosition() : Coordinates &
++GetGameField() : GameField &
++GetShipManager() : ShipManager &
++IsDoubleDamageActivated() : bool &
++operator basic_json() const : json
+__
+#cursor_position : Coordinates
+#game_field_ : GameField
+#is_double_damage_activated : bool
+#ship_manager_ : ShipManager
+}
+class "BotPlayer" as C_0001723364980034919539
+class C_0001723364980034919539 {
++BotPlayer() : void
++BotPlayer(const json & j) : void
+..
++CheckAttackResult(GameField::AttackResult attack_result) : Strategy
++GenerateShipsPlacement() : void
+-GetAvailableShipPositions(uint8_t ship_length) const : std::vector<std::pair<Coordinates,Ship::Orientation>>
+-InitializeBeforeNextShip() : void
++MoveCursor(const GameField & target_game_field) : void
+-MoveCursorFindOutOrientation(const GameField & target_game_field) : void
+-MoveCursorFinishLastSegments(const GameField & target_game_field) : void
+-MoveCursorRandom(const GameField & target_game_field) : void
+-MoveCursorReachEdge(const GameField & target_game_field) : void
++operator basic_json() const : json
+__
+-chosen_directions_ : std::vector<Direction>
+{static} -direction_map_ : const std::map<Direction,Coordinates>
+-reached_ship_edge_ : bool
+{static} -rng_ : utilities::RandomGenerator
+-ship_orientation_ : std::pair<bool,Ship::Orientation>
+-strategy_ : Strategy
+}
+enum "BotPlayer##Strategy" as C_0003857595153656818163
+enum C_0003857595153656818163 {
+RANDOM
+FINISH_OFF
+FIND_OUT_ORIENTATION
+REACH_EDGE
+FINISH_LAST_SEGMENTS
+}
+enum "BotPlayer##Direction" as C_0017694168875216003418
+enum C_0017694168875216003418 {
+UP
+DOWN
+LEFT
+RIGHT
+}
+class "HumanPlayer" as C_0002707961049795840249
+class C_0002707961049795840249 {
++HumanPlayer() : void
++HumanPlayer(const json & j) : void
+..
++ApplyAbility(Player & target) : std::unique_ptr<abilities::Ability>
++Attack(Player & target) : GameField::AttackResult
++GetAbilityManager() : abilities::AbilityManager &
++operator basic_json() const : json
+__
+-ability_manager_ : abilities::AbilityManager
+}
+}
+}
+package [values] as C_0016825228497160995303 {
+class "Coordinates" as C_0009385971476479255444
+class C_0009385971476479255444 {
++Coordinates() : void
++Coordinates(const int32_t & x, const int32_t & y) : void
++Coordinates(const json & j) : void
+..
++operator!=(const Coordinates & rhs) const : bool
++operator*(int32_t scalar) const : Coordinates
++operator*=(int32_t scalar) : Coordinates &
++operator+(const Coordinates & other) const : Coordinates
++operator+=(const Coordinates & other) : Coordinates &
++operator-() : Coordinates &
++operator-() const : Coordinates
++operator-(const Coordinates & other) const : Coordinates
++operator-=(const Coordinates & other) : Coordinates &
++operator/(int32_t scalar) const : Coordinates
++operator/=(int32_t scalar) : Coordinates &
++operator==(const Coordinates & rhs) const : bool
+..
++operator basic_json() const : json
+__
++x : int32_t
++y : int32_t
+}
+class "Area" as C_0004518109064681941179
+class C_0004518109064681941179 {
++Area() = default : void
++Area(const Coordinates & first, const Coordinates & second) : void
+..
++Contains(const Coordinates & coordinates) const : bool
++Contains(const Area & other) const : bool
++Intersection(const Area & other) const : Area
++Intersects(const Area & other) const : bool
+__
++end : Coordinates
++start : Coordinates
+}
+}
+class "Registry<K,V,Args...>" as C_0014178562340983775060
+class C_0014178562340983775060 {
+#Registry() = default : void
++Registry(const Registry<K,V,Args...> &) = deleted : void
+..
++operator=(const Registry<K,V,Args...> &) = deleted : Registry<K,V,Args...> &
+..
++Add(const K & key, Factory && factory) : void
++Clear() : void
++Contains(const K & key) const : bool
++Create(const K & key, Args &&... args) const : std::unique_ptr<V>
+{static} +GetInstance() : Registry<K,V,Args...> &
++IsEmpty() const : bool
++Size() const : size_t
++begin() : typename Map::iterator
++begin() const : typename Map::const_iterator
++end() : typename Map::iterator
++end() const : typename Map::const_iterator
+__
+#entries_ : Map
+}
+class "Registry<std::string,abilities::Ability,Player &,Player &>" as C_0013231449190072604421
+class C_0013231449190072604421 {
+__
+}
+package [states] as C_0002021406231130696229 {
+abstract "State" as C_0015764854148892732305
+abstract C_0015764854148892732305 {
++State(Game & game) : void
++~State() constexpr = default : void
+..
+{abstract} +GetName() = 0 : Name
+{abstract} +HandleCommand(input::Command command) = 0 : void
+{abstract} +operator basic_json() const = 0 : json
+__
+#game_ : Game &
+}
+class "SetupField" as C_0011306398176730384307
+class C_0011306398176730384307 {
++SetupField(Game & game, const Coordinates & current_field_size_ = = {5, 5}) : void
++SetupField(Game & game, const json & j) : void
+..
++GetName() : Name
++HandleCommand(input::Command command) : void
+-Render() const : void
++operator basic_json() const : json
+__
+-current_field_size_ : Coordinates
+{static} +kName : const Name
+}
+class "StateRegistry" as C_0005904038685241308656
+class C_0005904038685241308656 {
+{static} +GetInstance() : StateRegistry &
+{static} +RegisterStates() : void
+__
+}
+class "BotMove" as C_0008011199469677950671
+class C_0008011199469677950671 {
++BotMove(Game & game, bool did_make_move = false) : void
++BotMove(Game & game, const json & j) : void
+..
++GetName() : Name
++HandleCommand(input::Command command) : void
+-MakeMove() const : void
+-Render() const : void
++operator basic_json() const : json
+__
+-bot_player_ : BotPlayer &
+-did_make_move_ : bool
+-human_player_ : HumanPlayer &
+{static} +kName : const Name
+}
+class "SetupShipsLengths" as C_0000928909357383305865
+class C_0000928909357383305865 {
++SetupShipsLengths(Game & game, const std::vector<uint8_t> & ship_sizes = =
+                                 {entities::Ship::kMinShipLength}, size_t selected_ship_index = 0) : void
++SetupShipsLengths(Game & game, const json & j) : void
+..
+-CountOccupiedCells() const : uint32_t
++GetName() : Name
++HandleCommand(input::Command command) : void
+-Render() const : void
++operator basic_json() const : json
+__
+-cells_ : const uint32_t
+{static} +kName : const Name
+-selected_ship_index_ : size_t
+-ship_sizes_ : std::vector<uint8_t>
+}
+class "PlayerMove" as C_0002747334072488156309
+class C_0002747334072488156309 {
++PlayerMove(Game & game) : void
++PlayerMove(Game & game, const json & j) : void
+..
+-Attack() const : void
++GetName() : Name
++HandleCommand(input::Command command) : void
+-MoveCursor(input::Command command) const : void
+-Render() const : void
+-UseAbility() const : void
++operator basic_json() const : json
+__
+-bot_player_ : BotPlayer &
+-human_player_ : HumanPlayer &
+{static} +kName : const Name
+}
+class "PlaceShips" as C_0012036416191031271030
+class C_0012036416191031271030 {
++PlaceShips(Game & game, size_t current_ship_index = 0, entities::Ship::Orientation selected_orientation = entities::Ship::Orientation::VERTICAL, const Coordinates & selected_position = = {0, 0}) : void
++PlaceShips(Game & game, const json & j) : void
+..
++GetName() : Name
++HandleCommand(input::Command command) : void
+-Render() const : void
++operator basic_json() const : json
+__
+-current_ship_ : entities::ShipManager::iterator
+-game_field_ : entities::GameField &
+{static} +kName : const Name
+-selected_orientation_ : entities::Ship::Orientation
+-selected_position_ : Coordinates
+}
+class "SetupBot" as C_0002674565606331333902
+class C_0002674565606331333902 {
++SetupBot(Game & game) : void
++SetupBot(Game & game, const json & j) : void
+..
++GetName() : Name
++HandleCommand(input::Command command) : void
++operator basic_json() const : json
+__
+{static} +kName : const Name
+}
+}
+class "Game" as C_0017304172626563555845
+class C_0017304172626563555845 {
++Game(output::GameRenderer & game_renderer) : void
+..
++GetBotPlayer() : BotPlayer &
++GetHumanPlayer() : HumanPlayer &
++HandleCommand(input::Command command) : void
++IsRunning() const : bool
++Load(const std::string & filename) : void
++Render<T>(const T & object) : void
++Render<T,S>(const T & t, const S & s) : void
++Save(const std::string & filename) : void
++UpdateState(states::State * new_state) : void
+__
+-bot_player_ : BotPlayer
+-game_renderer_ : output::GameRenderer &
+-human_player_ : HumanPlayer
+-is_running_ : bool
+-state_ : std::unique_ptr<states::State>
+}
+class "Registry<std::string,states::State,Game &,nlohmann::basic_json &>" as C_0005509963402304791996
+class C_0005509963402304791996 {
+__
+}
+package [errors] as C_0003570710861226223222 {
+class "GameError" as C_0012871419755585203389
+class C_0012871419755585203389 {
++GameError() : void
++GameError(const std::string & message) : void
+__
+}
+class "CannotPlaceBotShipsError" as C_0015687033441472857734
+class C_0015687033441472857734 {
++CannotPlaceBotShipsError() : void
+__
+}
+class "ImpossibleShipPositionError" as C_0000567595108286667454
+class C_0000567595108286667454 {
++ImpossibleShipPositionError() : void
+__
+}
+class "InvalidCoordinatesError" as C_0010593894122024393204
+class C_0010593894122024393204 {
++InvalidCoordinatesError() : void
+__
+}
+class "AbilityNotRegisteredError" as C_0002369203348341554252
+class C_0002369203348341554252 {
++AbilityNotRegisteredError(const abilities::Ability::Name & ability_name) : void
+..
++GetAbilityName() const : const abilities::Ability::Name &
+__
+-ability_name_ : const abilities::Ability::Name
+}
+class "NoAbilitiesForApplicationError" as C_0018359200547659020521
+class C_0018359200547659020521 {
++NoAbilitiesForApplicationError() : void
+__
+}
+}
+C_0001928390068135084108 ..> C_0007944402605614631532 : CommandParser
+C_0001928390068135084108 --> C_0017304172626563555845 : -game_
+C_0017225230235595489251 o-- C_0008407285054585442143 : -key_to_command_
+C_0017225230235595489251 --> C_0008407285054585442143 : -defaults_
+C_0017225230235595489251 --> C_0008407285054585442143 : -string_to_command_
+C_0012712922857029588653 o-- C_0017225230235595489251 : -controls_
+C_0012676902587451234810 <|-- C_0012619179724770317191
+
+C_0004076100953837299465 --> C_0006480716459242791953 : -target_ship_manager_
+C_0004076100953837299465 --> C_0011731722491806328405 : -rng_
+C_0005987336390602158236 <|-- C_0004076100953837299465
+
+C_0005987336390602158236 <|-- C_0000366963092714511740
+
+C_0005601711361542694080 --> C_0009863756097780501319 : -target_game_field_
+C_0005601711361542694080 --> C_0009385971476479255444 : -start_coordinates_
+C_0005601711361542694080 --> C_0009385971476479255444 : +kScannerRange
+C_0005987336390602158236 <|-- C_0005601711361542694080
+
+C_0013231449190072604421 <|-- C_0011251770995947139160
+
+C_0013161388446846177579 --> C_0011251770995947139160 : -registry_
+C_0013161388446846177579 --> C_0011731722491806328405 : -rng_
+C_0011924014862371961313 --+ C_0010097717749984720267
+C_0016657000874055720998 --+ C_0010097717749984720267
+C_0006480716459242791953 o-- C_0010097717749984720267 : -ships_
+C_0009863756097780501319 o-- C_0009385971476479255444 : -dimensions_
+C_0001819397201730746015 --+ C_0009863756097780501319
+C_0016476966304050826666 --+ C_0009863756097780501319
+C_0010592162105350372448 --+ C_0009863756097780501319
+C_0010592162105350372448 --> C_0010097717749984720267 : +ship
+C_0008649833643707248413 o-- C_0006480716459242791953 : #ship_manager_
+C_0008649833643707248413 o-- C_0009863756097780501319 : #game_field_
+C_0008649833643707248413 o-- C_0009385971476479255444 : #cursor_position
+C_0001723364980034919539 o-- C_0003857595153656818163 : -strategy_
+C_0001723364980034919539 --> C_0017694168875216003418 : -direction_map_
+C_0001723364980034919539 --> C_0009385971476479255444 : -direction_map_
+C_0001723364980034919539 --> C_0011731722491806328405 : -rng_
+C_0008649833643707248413 <|-- C_0001723364980034919539
+
+C_0003857595153656818163 --+ C_0001723364980034919539
+C_0017694168875216003418 --+ C_0001723364980034919539
+C_0002707961049795840249 o-- C_0013161388446846177579 : -ability_manager_
+C_0008649833643707248413 <|-- C_0002707961049795840249
+
+C_0004518109064681941179 o-- C_0009385971476479255444 : +start
+C_0004518109064681941179 o-- C_0009385971476479255444 : +end
+C_0013231449190072604421 ..|> C_0014178562340983775060
+C_0015764854148892732305 --> C_0017304172626563555845 : #game_
+C_0011306398176730384307 o-- C_0009385971476479255444 : -current_field_size_
+C_0015764854148892732305 <|-- C_0011306398176730384307
+
+C_0005509963402304791996 <|-- C_0005904038685241308656
+
+C_0008011199469677950671 --> C_0002707961049795840249 : -human_player_
+C_0008011199469677950671 --> C_0001723364980034919539 : -bot_player_
+C_0015764854148892732305 <|-- C_0008011199469677950671
+
+C_0015764854148892732305 <|-- C_0000928909357383305865
+
+C_0002747334072488156309 --> C_0002707961049795840249 : -human_player_
+C_0002747334072488156309 --> C_0001723364980034919539 : -bot_player_
+C_0015764854148892732305 <|-- C_0002747334072488156309
+
+C_0012036416191031271030 --> C_0009863756097780501319 : -game_field_
+C_0012036416191031271030 --> C_0010097717749984720267 : -current_ship_
+C_0012036416191031271030 o-- C_0010097717749984720267 : -current_ship_
+C_0012036416191031271030 o-- C_0011924014862371961313 : -selected_orientation_
+C_0012036416191031271030 o-- C_0009385971476479255444 : -selected_position_
+C_0015764854148892732305 <|-- C_0012036416191031271030
+
+C_0015764854148892732305 <|-- C_0002674565606331333902
+
+C_0017304172626563555845 o-- C_0015764854148892732305 : -state_
+C_0017304172626563555845 o-- C_0002707961049795840249 : -human_player_
+C_0017304172626563555845 o-- C_0001723364980034919539 : -bot_player_
+C_0017304172626563555845 --> C_0012676902587451234810 : -game_renderer_
+C_0005509963402304791996 ..|> C_0014178562340983775060
+C_0012871419755585203389 <|-- C_0015687033441472857734
+
+C_0012871419755585203389 <|-- C_0000567595108286667454
+
+C_0012871419755585203389 <|-- C_0010593894122024393204
+
+C_0012871419755585203389 <|-- C_0002369203348341554252
+
+C_0012871419755585203389 <|-- C_0018359200547659020521
+
+
+'Generated with clang-uml, version 972dbea
+'LLVM version Ubuntu clang version 19.1.1 (1ubuntu1)
+@enduml

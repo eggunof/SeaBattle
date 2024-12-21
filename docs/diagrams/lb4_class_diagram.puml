@@ -1,0 +1,116 @@
+@startuml
+enum "input::Command" as C_0008407285054585442143
+enum C_0008407285054585442143 {
+INVALID
+UP
+DOWN
+LEFT
+RIGHT
+PRIMARY
+SECONDARY
+SAVE
+LOAD
+QUIT
+TOTAL_COMMANDS
+}
+class "input::Controls" as C_0017225230235595489251
+class C_0017225230235595489251 {
++Controls() : void
++Controls(const std::string & filename) : void
+..
++GetCommand(char key) const : Command
++ReadKeyBindings(const std::string & filename) : void
+__
+{static} -defaults_ : const std::map<char,Command>
+-key_to_command_ : std::map<char,Command>
+{static} -string_to_command_ : const std::map<std::string,Command>
+}
+class "input::ConsoleParser" as C_0012712922857029588653
+class C_0012712922857029588653 {
++ConsoleParser() = default : void
++ConsoleParser(const std::string & filename) : void
++ConsoleParser(Controls controls) : void
+..
++Parse() const : Command
+__
+-controls_ : Controls
+}
+class "input::HasParseMethod<T>" as C_0007944402605614631532
+class C_0007944402605614631532 <<concept>> {
+(T t)
+..
+{t.Parse()} -> std::same_as<Command>
+}
+class "input::GameController<input::HasParseMethod CommandParser>" as C_0001928390068135084108
+class C_0001928390068135084108 {
++GameController(Game & game, const CommandParser & parser) : void
++GameController(Game & game) : void
+..
++HandleInput() : void
+__
+-game_ : Game &
+-parser_ : CommandParser
+}
+abstract "output::GameRenderer" as C_0012676902587451234810
+abstract C_0012676902587451234810 {
++~GameRenderer() constexpr = default : void
+..
+{abstract} +Render(const std::string & string) = 0 : void
+{abstract} +Render(const std::exception & e) = 0 : void
+{abstract} +Render(const entities::GameField & field) = 0 : void
+{abstract} +Render(const entities::GameField & field, const Coordinates & cursor) = 0 : void
+{abstract} +Render(const entities::GameField & field, const Area & area) = 0 : void
+{abstract} +Render(const abilities::Ability & ability) = 0 : void
+{abstract} +Render(const abilities::Bombardment & ability) = 0 : void
+{abstract} +Render(const abilities::DoubleDamage & ability) = 0 : void
+{abstract} +Render(const abilities::Scanner & ability) = 0 : void
+__
+}
+class "output::ConsoleRenderer" as C_0012619179724770317191
+class C_0012619179724770317191 {
++Render(const std::string & string) : void
++Render(const std::exception & e) : void
++Render(const entities::GameField & field) : void
++Render(const entities::GameField & field, const Coordinates & cursor) : void
++Render(const entities::GameField & field, const Area & area) : void
++Render(const abilities::Ability & ability) : void
++Render(const abilities::Bombardment & ability) : void
++Render(const abilities::DoubleDamage & ability) : void
++Render(const abilities::Scanner & ability) : void
+__
+}
+class "Game" as C_0017304172626563555845
+class C_0017304172626563555845 {
++Game(output::GameRenderer & game_renderer) : void
+..
++GetBotPlayer() : BotPlayer &
++GetHumanPlayer() : HumanPlayer &
++HandleCommand(input::Command command) : void
++IsRunning() const : bool
++Load(const std::string & filename) : void
++Render<T>(const T & object) : void
++Render<T,S>(const T & t, const S & s) : void
++Save(const std::string & filename) : void
++UpdateState(states::State * new_state) : void
+__
+-bot_player_ : BotPlayer
+-game_renderer_ : output::GameRenderer &
+-human_player_ : HumanPlayer
+-is_running_ : bool
+-state_ : std::unique_ptr<states::State>
+}
+C_0017225230235595489251 o-- C_0008407285054585442143 : -key_to_command_
+C_0017225230235595489251 --> C_0008407285054585442143 : -defaults_
+C_0017225230235595489251 --> C_0008407285054585442143 : -string_to_command_
+C_0012712922857029588653 ..> C_0008407285054585442143
+C_0012712922857029588653 o-- C_0017225230235595489251 : -controls_
+C_0001928390068135084108 ..> C_0007944402605614631532 : CommandParser
+C_0001928390068135084108 --> C_0017304172626563555845 : -game_
+C_0012676902587451234810 <|-- C_0012619179724770317191
+
+C_0017304172626563555845 ..> C_0008407285054585442143
+C_0017304172626563555845 --> C_0012676902587451234810 : -game_renderer_
+
+'Generated with clang-uml, version 972dbea
+'LLVM version Ubuntu clang version 19.1.1 (1ubuntu1)
+@enduml

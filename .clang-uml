@@ -1,0 +1,80 @@
+# Change to directory where compile_commands.j is
+compilation_database_dir: ./cmake-build-debug
+# Change to directory where diagram should be written
+output_directory: docs/diagrams
+#debug_mode: true
+diagrams:
+  full_class_diagram:
+    type: class
+    glob:
+      - "src/**/*.h"
+      - "src/**/*.cc"
+    generate_packages: true
+    using_namespace:
+      - seabattle
+    include:
+      namespaces:
+        - seabattle
+    exclude:
+      relationships:
+        - dependency
+
+  lb2_class_diagram:
+    type: class
+    using_namespace:
+      - seabattle
+    include:
+      namespaces:
+        - seabattle::abilities
+        - seabattle::errors
+        - seabattle::entities::players
+    exclude:
+      namespaces:
+        - seabattle::entities::players::BotPlayer
+
+  lb3_class_diagram:
+    type: class
+    using_namespace:
+      - seabattle
+    include:
+      elements:
+        - seabattle::Game
+        - seabattle::Command
+      subclasses:
+        - seabattle::states::State
+        - seabattle::entities::players::Player
+
+  lb3_class_diagram_1:
+    type: class
+    using_namespace:
+      - seabattle
+    include:
+      subclasses:
+        - seabattle::states::State
+
+  lb3_class_diagram_2:
+    type: class
+    using_namespace:
+      - seabattle
+    include:
+      elements:
+        - seabattle::Game
+        - seabattle::Command
+      subclasses:
+        - seabattle::entities::players::Player
+
+  lb4_class_diagram:
+    type: class
+    using_namespace:
+      - seabattle
+    include:
+      namespaces:
+        - seabattle
+    exclude:
+      namespaces:
+        - seabattle::abilities
+        - seabattle::entities
+        - seabattle::errors
+        - seabattle::states
+        - seabattle::utilities
+        - seabattle::values

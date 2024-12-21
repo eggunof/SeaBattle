@@ -1,0 +1,165 @@
+@startuml
+class "entities::players::Player" as C_0008649833643707248413
+class C_0008649833643707248413 {
++Player() = default : void
++Player(const Player & other) = default : void
++Player(Player && other) noexcept = default : void
++Player(const json & j) : void
++~Player() constexpr = default : void
+..
++operator=(const Player & other) = default : Player &
++operator=(Player && other) noexcept = default : Player &
+..
++Attack(Player & target) : GameField::AttackResult
++GetCursorPosition() : Coordinates &
++GetGameField() : GameField &
++GetShipManager() : ShipManager &
++IsDoubleDamageActivated() : bool &
++operator basic_json() const : json
+__
+#cursor_position : Coordinates
+#game_field_ : GameField
+#is_double_damage_activated : bool
+#ship_manager_ : ShipManager
+}
+class "entities::players::HumanPlayer" as C_0002707961049795840249
+class C_0002707961049795840249 {
++HumanPlayer() : void
++HumanPlayer(const json & j) : void
+..
++ApplyAbility(Player & target) : std::unique_ptr<abilities::Ability>
++Attack(Player & target) : GameField::AttackResult
++GetAbilityManager() : abilities::AbilityManager &
++operator basic_json() const : json
+__
+-ability_manager_ : abilities::AbilityManager
+}
+class "errors::GameError" as C_0012871419755585203389
+class C_0012871419755585203389 {
++GameError() : void
++GameError(const std::string & message) : void
+__
+}
+class "errors::CannotPlaceBotShipsError" as C_0015687033441472857734
+class C_0015687033441472857734 {
++CannotPlaceBotShipsError() : void
+__
+}
+class "errors::AbilityNotRegisteredError" as C_0002369203348341554252
+class C_0002369203348341554252 {
++AbilityNotRegisteredError(const abilities::Ability::Name & ability_name) : void
+..
++GetAbilityName() const : const abilities::Ability::Name &
+__
+-ability_name_ : const abilities::Ability::Name
+}
+class "errors::NoAbilitiesForApplicationError" as C_0018359200547659020521
+class C_0018359200547659020521 {
++NoAbilitiesForApplicationError() : void
+__
+}
+class "errors::ImpossibleShipPositionError" as C_0000567595108286667454
+class C_0000567595108286667454 {
++ImpossibleShipPositionError() : void
+__
+}
+class "errors::InvalidCoordinatesError" as C_0010593894122024393204
+class C_0010593894122024393204 {
++InvalidCoordinatesError() : void
+__
+}
+abstract "abilities::Ability" as C_0005987336390602158236
+abstract C_0005987336390602158236 {
++~Ability() constexpr = default : void
+..
+{abstract} +Apply() = 0 : void
+{abstract} +RenderBy(output::GameRenderer & renderer) const = 0 : void
+__
+}
+class "abilities::Bombardment" as C_0004076100953837299465
+class C_0004076100953837299465 {
++Bombardment(entities::players::Player & user, entities::players::Player & target) : void
+..
++Apply() : void
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_double_damage_activated_ : bool &
+{static} +kName : const Name
+{static} -rng_ : utilities::RandomGenerator
+-target_ship_manager_ : entities::ShipManager &
+}
+class "abilities::DoubleDamage" as C_0000366963092714511740
+class C_0000366963092714511740 {
++DoubleDamage(entities::players::Player & user, entities::players::Player &) : void
+..
++Apply() : void
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_double_damage_activated_ : bool &
+{static} +kName : const Name
+}
+class "abilities::Scanner" as C_0005601711361542694080
+class C_0005601711361542694080 {
++Scanner(entities::players::Player & user, entities::players::Player & target) : void
+..
++Apply() : void
++IsFound() const : bool
++RenderBy(output::GameRenderer & renderer) const : void
+__
+-is_found_ : bool
+{static} +kName : const Name
+{static} +kScannerRange : const Coordinates
+-start_coordinates_ : const Coordinates &
+-target_game_field_ : const entities::GameField &
+}
+class "abilities::AbilityRegistry" as C_0011251770995947139160
+class C_0011251770995947139160 {
+{static} +GetInstance() : AbilityRegistry &
+{static} +RegisterAbilities() : void
+__
+}
+class "abilities::AbilityManager" as C_0013161388446846177579
+class C_0013161388446846177579 {
++AbilityManager() : void
++AbilityManager(const json & j) : void
+..
++AddAbility(const Ability::Name & ability_name) : void
++AddRandomAbility() : void
++IsEmpty() const : bool
++PeekAbility() const : const Ability::Name &
++PopAbility() : void
++Size() const : size_t
++operator basic_json() const : json
+__
+-abilities_ : std::queue<Ability::Name>
+{static} -registry_ : const AbilityRegistry &
+{static} -rng_ : utilities::RandomGenerator
+}
+C_0002707961049795840249 ..> C_0005987336390602158236
+C_0002707961049795840249 o-- C_0013161388446846177579 : -ability_manager_
+C_0008649833643707248413 <|-- C_0002707961049795840249
+
+C_0012871419755585203389 <|-- C_0015687033441472857734
+
+C_0012871419755585203389 <|-- C_0002369203348341554252
+
+C_0012871419755585203389 <|-- C_0018359200547659020521
+
+C_0012871419755585203389 <|-- C_0000567595108286667454
+
+C_0012871419755585203389 <|-- C_0010593894122024393204
+
+C_0004076100953837299465 ..> C_0008649833643707248413
+C_0005987336390602158236 <|-- C_0004076100953837299465
+
+C_0000366963092714511740 ..> C_0008649833643707248413
+C_0005987336390602158236 <|-- C_0000366963092714511740
+
+C_0005601711361542694080 ..> C_0008649833643707248413
+C_0005987336390602158236 <|-- C_0005601711361542694080
+
+C_0013161388446846177579 --> C_0011251770995947139160 : -registry_
+
+'Generated with clang-uml, version 972dbea
+'LLVM version Ubuntu clang version 19.1.1 (1ubuntu1)
+@enduml
