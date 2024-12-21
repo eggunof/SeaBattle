@@ -8,6 +8,18 @@ file(GLOB_RECURSE CCFILES "src/*.cc")
 file(GLOB_RECURSE HFILES "src/*.h")
 add_executable(${PROJECT_NAME} ${CCFILES} ${HFILES})
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(nlohmann_json QUIET)
+
+if (NOT nlohmann_json_FOUND)
+    message(STATUS "nlohmann_json not found, using FetchContent to load it...")
+
+    include(FetchContent)
+    FetchContent_Declare(
+            nlohmann_json
+            GIT_REPOSITORY https://github.com/nlohmann/json.git
+            GIT_TAG v3.11.3
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif ()
 
 target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
